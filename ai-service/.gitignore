@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+uploads/audio/*
+uploads/documents/*
+!uploads/audio/.gitkeep
+!uploads/documents/.gitkeep
+chroma_db/*
+!chroma_db/.gitkeep
+models/
+*.log
+.DS_Store
