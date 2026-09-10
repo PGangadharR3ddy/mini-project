@@ -1,0 +1,6 @@
+{
+  "name": "Smart Classroom Management System",
+  "description": "Bauhaus-inspired smart classroom management platform featuring timetable, announcements, resources repository, academic events, and admin panel with role-based access.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
