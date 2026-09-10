@@ -77,37 +77,46 @@ public class ClassroomService {
     // ─── Detail view (timetable + announcements + upcoming events) ────────────
 
     public ClassroomDTO.DetailResponse getDetail(Long id) {
-        Classroom classroom = getOrThrow(id);
+    Classroom classroom = getOrThrow(id);
 
-        List<TimetableEntryDTO.Response> timetable = timetableRepo
-                .findByClassroomIdOrderByDayAscStartTimeAsc(id).stream()
-                .map(timetableMapper::toResponse)
-                .collect(Collectors.toList());
+    List<TimetableEntryDTO.Response> timetable = timetableRepo
+            .findByClassroomIdOrderByDayAscStartTimeAsc(id).stream()
+            .map(timetableMapper::toResponse)
+            .collect(Collectors.toList());
 
-        List<AnnouncementDTO.Response> announcements = announcementRepo
-                .findByClassroomIdOrderByCreatedAtDesc(id, PageRequest.of(0, 5))
-                .stream()
-                .map(announcementMapper::toResponse)
-                .collect(Collectors.toList());
+    List<AnnouncementDTO.Response> announcements = announcementRepo
+            .findByClassroomIdOrderByCreatedAtDesc(id, PageRequest.of(0, 5))
+            .stream()
+            .map(announcementMapper::toResponse)
+            .collect(Collectors.toList());
 
-        List<AcademicEventDTO.Response> upcomingEvents = eventRepo
-                .findUpcomingByClassroom(id, LocalDateTime.now()).stream()
-                .limit(5)
-                .map(eventMapper::toResponse)
-                .collect(Collectors.toList());
+    List<AcademicEventDTO.Response> upcomingEvents = eventRepo
+            .findUpcomingByClassroom(id, LocalDateTime.now()).stream()
+            .limit(5)
+            .map(eventMapper::toResponse)
+            .collect(Collectors.toList());
 
-        return ClassroomDTO.DetailResponse.builder()
-                .id(classroom.getId())
-                .name(classroom.getName())
-                .section(classroom.getSection())
-                .department(classroom.getDepartment())
-                .year(classroom.getYear())
-                .semester(classroom.getSemester())
-                .timetable(timetable)
-                .announcements(announcements)
-                .upcomingEvents(upcomingEvents)
-                .build();
-    }
+    return ClassroomDTO.DetailResponse.builder()
+            .id(classroom.getId())
+            .name(classroom.getName())
+            .section(classroom.getSection())
+            .department(classroom.getDepartment())
+            .year(classroom.getYear())
+            .semester(classroom.getSemester())
+            .capacity(classroom.getCapacity())
+            .studentCount(classroom.getStudentCount())
+            .academicYear(classroom.getAcademicYear())
+            .advisorName(classroom.getAdvisorName())
+            .advisorEmail(classroom.getAdvisorEmail())
+            .classroomNumber(classroom.getClassroomNumber())
+            .syllabusProgress(classroom.getSyllabusProgress())
+            .totalLecturesToday(classroom.getTotalLecturesToday())
+            .pendingGrading(classroom.getPendingGrading())
+            .timetable(timetable)
+            .announcements(announcements)
+            .upcomingEvents(upcomingEvents)
+            .build();
+}
 
     // ─── Helper ───────────────────────────────────────────────────────────────
 

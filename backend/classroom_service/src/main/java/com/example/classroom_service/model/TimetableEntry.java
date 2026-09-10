@@ -2,7 +2,6 @@ package com.example.classroom_service.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalTime;
 
 @Entity
@@ -22,8 +21,8 @@ public class TimetableEntry {
     private Classroom classroom;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false)
-    private DayOfWeek day;              // MON, TUE, WED, THU, FRI, SAT
+    @Column(nullable = false)
+    private DayOfWeek day;
 
     @Column(nullable = false)
     private LocalTime startTime;
@@ -32,16 +31,26 @@ public class TimetableEntry {
     private LocalTime endTime;
 
     @Column(nullable = false)
-    private String subject;             // e.g. "Operating Systems"
+    private String subject;
+
+    @Column
+    private String subjectCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private SlotType type = SlotType.LECTURE;
 
     @Column(nullable = false)
-    private Long facultyId;             // references user-service
+    private Long facultyId;
 
     @Column
-    private String facultyName;         // denormalized for display speed
+    private String facultyName;
 
     @Column
-    private String roomNumber;          // e.g. "Lab 3", "Room 201"
+    private String roomNumber;
 
-    // DayOfWeek enum is defined as a top-level enum in model/DayOfWeek.java
+    public enum SlotType {
+        LECTURE, LAB, TUTORIAL
+    }
 }

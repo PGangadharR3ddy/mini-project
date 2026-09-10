@@ -1,11 +1,9 @@
 package com.example.classroom_service.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,13 +18,12 @@ public class Announcement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // nullable — dept-level announcements don't belong to one classroom
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classroom_id")
     private Classroom classroom;
 
     @Column
-    private String department;          // for dept-level announcements
+    private String department;
 
     @Column(nullable = false)
     private String title;
@@ -36,13 +33,23 @@ public class Announcement {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AnnouncementType type;      // SECTION, DEPARTMENT, GENERAL
+    private AnnouncementType type;
 
     @Column(nullable = false)
-    private Long createdBy;             // faculty/admin user id
+    private Long createdBy;
 
     @Column
-    private String createdByName;       // denormalized
+    private String createdByName;
+
+    @Column
+    private String authorRole;
+
+    @Column
+    private String authorAvatar;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean urgent = false;
 
     @CreationTimestamp
     @Column(updatable = false)

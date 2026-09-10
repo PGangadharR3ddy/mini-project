@@ -2,7 +2,6 @@ package com.example.classroom_service.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
 
 @Entity
@@ -18,19 +17,46 @@ public class Classroom {
     private Long id;
 
     @Column(nullable = false)
-    private String name;           // e.g. "CSE - A"
+    private String name;
 
     @Column(nullable = false)
-    private String section;        // e.g. "A", "B"
+    private String section;
 
     @Column(nullable = false)
-    private String department;     // e.g. "CSE", "ECE"
-
-    @Column(name = "year_", nullable = false)
-    private Integer year;          // 1, 2, 3, 4
+    private String department;
 
     @Column(nullable = false)
-    private Integer semester;      // 1 to 8
+    private Integer year;
+
+    @Column(nullable = false)
+    private Integer semester;
+
+    @Column
+    private Integer capacity;
+
+    @Column
+    private Integer studentCount;
+
+    @Column
+    private String academicYear;
+
+    @Column
+    private String advisorName;
+
+    @Column
+    private String advisorEmail;
+
+    @Column
+    private String classroomNumber;
+
+    @Column
+    private Integer syllabusProgress;
+
+    @Column
+    private Integer totalLecturesToday;
+
+    @Column
+    private Integer pendingGrading;
 
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TimetableEntry> timetableEntries;

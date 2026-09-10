@@ -22,6 +22,7 @@ public class AcademicEventMapper {
                 .durationMinutes(req.getDurationMinutes())
                 .venue(req.getVenue())
                 .syncedToCalendar(false)
+                .isUrgent(req.getIsUrgent() != null ? req.getIsUrgent() : false)
                 .createdBy(createdBy)
                 .createdByName(createdByName)
                 .build();
@@ -41,6 +42,7 @@ public class AcademicEventMapper {
                 .venue(e.getVenue())
                 .googleCalendarEventId(e.getGoogleCalendarEventId())
                 .syncedToCalendar(e.getSyncedToCalendar())
+                .isUrgent(e.getIsUrgent())
                 .createdBy(e.getCreatedBy())
                 .createdByName(e.getCreatedByName())
                 .createdAt(e.getCreatedAt())
@@ -55,5 +57,6 @@ public class AcademicEventMapper {
         if (req.getEventDateTime() != null)   e.setEventDateTime(req.getEventDateTime());
         if (req.getDurationMinutes() != null) e.setDurationMinutes(req.getDurationMinutes());
         if (req.getVenue() != null)           e.setVenue(req.getVenue());
+        if (req.getIsUrgent() != null)        e.setIsUrgent(req.getIsUrgent());
     }
 }

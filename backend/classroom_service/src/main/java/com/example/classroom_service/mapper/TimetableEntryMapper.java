@@ -16,33 +16,39 @@ public class TimetableEntryMapper {
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
                 .subject(req.getSubject())
+                .subjectCode(req.getSubjectCode())
+                .type(req.getType() != null ? req.getType() : TimetableEntry.SlotType.LECTURE)
                 .facultyId(req.getFacultyId())
                 .facultyName(req.getFacultyName())
                 .roomNumber(req.getRoomNumber())
                 .build();
     }
 
-    public TimetableEntryDTO.Response toResponse(TimetableEntry entry) {
+    public TimetableEntryDTO.Response toResponse(TimetableEntry e) {
         return TimetableEntryDTO.Response.builder()
-                .id(entry.getId())
-                .classroomId(entry.getClassroom().getId())
-                .day(entry.getDay())
-                .startTime(entry.getStartTime())
-                .endTime(entry.getEndTime())
-                .subject(entry.getSubject())
-                .facultyId(entry.getFacultyId())
-                .facultyName(entry.getFacultyName())
-                .roomNumber(entry.getRoomNumber())
+                .id(e.getId())
+                .classroomId(e.getClassroom().getId())
+                .day(e.getDay())
+                .startTime(e.getStartTime())
+                .endTime(e.getEndTime())
+                .subject(e.getSubject())
+                .subjectCode(e.getSubjectCode())
+                .type(e.getType())
+                .facultyId(e.getFacultyId())
+                .facultyName(e.getFacultyName())
+                .roomNumber(e.getRoomNumber())
                 .build();
     }
 
-    public void updateEntity(TimetableEntry entry, TimetableEntryDTO.UpdateRequest req) {
-        if (req.getDay() != null)         entry.setDay(req.getDay());
-        if (req.getStartTime() != null)   entry.setStartTime(req.getStartTime());
-        if (req.getEndTime() != null)     entry.setEndTime(req.getEndTime());
-        if (req.getSubject() != null)     entry.setSubject(req.getSubject());
-        if (req.getFacultyId() != null)   entry.setFacultyId(req.getFacultyId());
-        if (req.getFacultyName() != null) entry.setFacultyName(req.getFacultyName());
-        if (req.getRoomNumber() != null)  entry.setRoomNumber(req.getRoomNumber());
+    public void updateEntity(TimetableEntry e, TimetableEntryDTO.UpdateRequest req) {
+        if (req.getDay() != null)         e.setDay(req.getDay());
+        if (req.getStartTime() != null)   e.setStartTime(req.getStartTime());
+        if (req.getEndTime() != null)     e.setEndTime(req.getEndTime());
+        if (req.getSubject() != null)     e.setSubject(req.getSubject());
+        if (req.getSubjectCode() != null) e.setSubjectCode(req.getSubjectCode());
+        if (req.getType() != null)        e.setType(req.getType());
+        if (req.getFacultyId() != null)   e.setFacultyId(req.getFacultyId());
+        if (req.getFacultyName() != null) e.setFacultyName(req.getFacultyName());
+        if (req.getRoomNumber() != null)  e.setRoomNumber(req.getRoomNumber());
     }
 }

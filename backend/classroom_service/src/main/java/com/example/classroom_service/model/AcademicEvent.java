@@ -3,7 +3,6 @@ package com.example.classroom_service.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -50,6 +49,10 @@ public class AcademicEvent {
     @Builder.Default
     @Column(nullable = false)
     private Boolean syncedToCalendar = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isUrgent = false;
 
     @Column(nullable = false)
     private Long createdBy;

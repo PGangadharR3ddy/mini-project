@@ -20,6 +20,9 @@ public class AnnouncementMapper {
                 .type(req.getType())
                 .createdBy(createdBy)
                 .createdByName(createdByName)
+                .authorRole(req.getAuthorRole())
+                .authorAvatar(req.getAuthorAvatar())
+                .urgent(req.getUrgent() != null ? req.getUrgent() : false)
                 .build();
     }
 
@@ -33,13 +36,17 @@ public class AnnouncementMapper {
                 .type(a.getType())
                 .createdBy(a.getCreatedBy())
                 .createdByName(a.getCreatedByName())
+                .authorRole(a.getAuthorRole())
+                .authorAvatar(a.getAuthorAvatar())
+                .urgent(a.getUrgent())
                 .createdAt(a.getCreatedAt())
                 .updatedAt(a.getUpdatedAt())
                 .build();
     }
 
     public void updateEntity(Announcement a, AnnouncementDTO.UpdateRequest req) {
-        if (req.getTitle() != null) a.setTitle(req.getTitle());
-        if (req.getBody() != null)  a.setBody(req.getBody());
+        if (req.getTitle() != null)  a.setTitle(req.getTitle());
+        if (req.getBody() != null)   a.setBody(req.getBody());
+        if (req.getUrgent() != null) a.setUrgent(req.getUrgent());
     }
 }
