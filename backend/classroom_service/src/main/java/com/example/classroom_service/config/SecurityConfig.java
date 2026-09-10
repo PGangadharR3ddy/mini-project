@@ -76,6 +76,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasAnyRole("FACULTY","ADMIN")
                 .requestMatchers(HttpMethod.GET,    "/api/events/**").authenticated()
 
+                // Projects — all authenticated users can read; authenticated users can post
+                .requestMatchers(HttpMethod.GET,    "/api/projects/**").authenticated()
+                .requestMatchers(HttpMethod.POST,   "/api/projects/**").authenticated()
+                .requestMatchers(HttpMethod.PUT,    "/api/projects/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/**").authenticated()
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
