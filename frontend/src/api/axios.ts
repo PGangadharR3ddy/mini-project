@@ -401,6 +401,9 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    if (error.config?.url?.startsWith('/api/projects')) {
+      return Promise.reject(error);
+    }
     // If backend connection fails (ERR_CONNECTION_REFUSED or timeout or network error),
     // serve fallback mock data so app remains fully interactive and testable.
     if (!error.response && error.config) {

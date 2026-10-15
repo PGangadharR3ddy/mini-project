@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ShieldAlert,
   GraduationCap,
+  FolderKanban,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -40,6 +41,11 @@ export const Sidebar: React.FC = () => {
       to: '/events',
       label: 'Events & Dates',
       icon: CalendarDays,
+    },
+    {
+      to: '/projects',
+      label: 'Projects',
+      icon: FolderKanban,
     },
   ];
 

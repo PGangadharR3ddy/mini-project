@@ -118,3 +118,49 @@ export interface AcademicEvent {
   isUrgent?: boolean;
   status?: string;
 }
+
+export type ProjectStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED';
+export type JoinRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+export interface ProjectMember {
+  studentId: number;
+  studentName: string;
+  studentDepartment: string;
+  joinedAt: string;
+}
+
+export interface Project {
+  id: number;
+  title: string;
+  description: string;
+  techStack: string;
+  repoUrl?: string | null;
+  liveUrl?: string | null;
+  teamSize: number;
+  tags?: string | null;
+  status: ProjectStatus;
+  classroomId: number | null;
+  classroomName?: string | null;
+  department: string;
+  postedBy: number;
+  postedByName: string;
+  postedByRole: Role;
+  memberCount: number;
+  isMember: boolean;
+  hasRequested: boolean;
+  members: ProjectMember[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectJoinRequest {
+  id: number;
+  projectId: number;
+  projectTitle: string;
+  requestedBy: number;
+  requestedByName: string;
+  requestedByDepartment: string;
+  message: string;
+  status: JoinRequestStatus;
+  requestedAt: string;
+}
