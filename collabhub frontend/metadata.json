@@ -1,0 +1,6 @@
+{
+  "name": "Smart Classroom Management System",
+  "description": "Smart Classroom Management System frontend with role-based dashboard, interactive timetable, announcements, learning resources, academic events, collaborative project hub, and admin management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
