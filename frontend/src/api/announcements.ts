@@ -20,8 +20,14 @@ export async function getAnnouncementFeed(
   return response.data.data;
 }
 
-export async function getClassroomAnnouncements(classroomId: number = 1): Promise<Announcement[]> {
-  const response = await api.get<ApiResponse<Announcement[]>>(`/api/announcements/classroom/${classroomId}`);
+export async function getClassroomAnnouncements(
+  classroomId: number = 1,
+  page: number = 0,
+  size: number = 20
+): Promise<SpringPage<Announcement>> {
+  const response = await api.get<ApiResponse<SpringPage<Announcement>>>(
+    `/api/announcements/classroom/${classroomId}?page=${page}&size=${size}`
+  );
   return response.data.data;
 }
 
@@ -45,7 +51,14 @@ export async function updateAnnouncement(
   id: number,
   payload: Partial<Announcement>
 ): Promise<Announcement> {
-  const response = await api.put<ApiResponse<Announcement>>(`/api/announcements/${id}`, payload);
+  const response = await api.put<ApiResponse<Announcement>>(`/api/announcements/${id}`, {
+    classroomId: payload.classroomId,
+    title: payload.title,
+    body: payload.body,
+    type: payload.type,
+    department: payload.department,
+    urgent: payload.urgent,
+  });
   return response.data.data;
 }
 

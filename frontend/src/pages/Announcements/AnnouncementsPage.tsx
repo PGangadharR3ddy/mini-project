@@ -3,8 +3,6 @@ import {
   Megaphone,
   Plus,
   Search,
-  FileText,
-  Download,
   Edit2,
   Trash2,
 } from 'lucide-react';
@@ -46,8 +44,6 @@ export const AnnouncementsPage: React.FC = () => {
     type: 'SECTION' as AnnouncementType,
     department: user?.department || 'CSE',
     urgent: false,
-    hasAttachment: false,
-    attachmentName: '',
   });
 
   const canPost = canCreateContent(role || undefined);
@@ -83,8 +79,6 @@ export const AnnouncementsPage: React.FC = () => {
       type: 'SECTION',
       department: user?.department || 'CSE',
       urgent: false,
-      hasAttachment: false,
-      attachmentName: '',
     });
     setIsPostModalOpen(true);
   };
@@ -97,8 +91,6 @@ export const AnnouncementsPage: React.FC = () => {
       type: item.type,
       department: item.department || user?.department || 'CSE',
       urgent: !!item.urgent,
-      hasAttachment: !!item.attachmentName,
-      attachmentName: item.attachmentName || '',
     });
     setIsPostModalOpen(true);
   };
@@ -106,7 +98,7 @@ export const AnnouncementsPage: React.FC = () => {
   const handleSaveAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: any = {
+      const payload = {
         classroomId: formData.type === 'SECTION' ? classroomId : null,
         title: formData.title,
         body: formData.body,
@@ -114,12 +106,6 @@ export const AnnouncementsPage: React.FC = () => {
         department: formData.department,
         urgent: formData.urgent,
       };
-
-      if (formData.hasAttachment && formData.attachmentName) {
-        payload.attachmentName = formData.attachmentName;
-        payload.attachmentSize = '2.4 MB';
-        payload.attachmentUrl = '#';
-      }
 
       if (editingItem) {
         await updateAnnouncement(editingItem.id, payload);
@@ -303,35 +289,6 @@ export const AnnouncementsPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Optional Attachment Pill */}
-                {item.attachmentName && (
-                  <div className="mt-4 pt-4 border-t border-stone-100">
-                    <div className="inline-flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl p-2.5 hover:bg-stone-100 transition-colors">
-                      <div className="w-7 h-7 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-stone-900">
-                          {item.attachmentName}
-                        </div>
-                        <div className="text-[10px] text-stone-500">
-                          {item.attachmentSize || '2.4 MB'} • Document
-                        </div>
-                      </div>
-                      <a
-                        href={item.attachmentUrl || '#'}
-                        download
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast.success(`Downloading ${item.attachmentName}`);
-                        }}
-                        className="ml-3 p-1.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 text-stone-700 transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -438,29 +395,6 @@ export const AnnouncementsPage: React.FC = () => {
               </span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={formData.hasAttachment}
-                onChange={(e) => setFormData({ ...formData, hasAttachment: e.target.checked })}
-                className="w-4 h-4 accent-stone-900 rounded"
-              />
-              <span className="text-xs font-medium text-stone-700">
-                Attach Reference Document (PDF)
-              </span>
-            </label>
-
-            {formData.hasAttachment && (
-              <div className="pt-2">
-                <input
-                  type="text"
-                  placeholder="e.g. Schedule_Matrix_V2.pdf"
-                  value={formData.attachmentName}
-                  onChange={(e) => setFormData({ ...formData, attachmentName: e.target.value })}
-                  className="w-full bg-white border border-stone-200 rounded-lg p-2 text-xs text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
-                />
-              </div>
-            )}
           </div>
 
           <div className="pt-4 border-t border-stone-100 flex justify-end gap-3">
@@ -493,4 +427,3 @@ export const AnnouncementsPage: React.FC = () => {
     </div>
   );
 };
-

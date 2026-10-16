@@ -20,8 +20,11 @@ public class AnnouncementDTO {
 
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class UpdateRequest {
+        private Long classroomId;
+        private String department;
         private String title;
         private String body;
+        private AnnouncementType type;
         private Boolean urgent;
     }
 

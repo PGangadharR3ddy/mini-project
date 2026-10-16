@@ -1,5 +1,5 @@
 import api from './axios';
-import { AcademicEvent, EventType, ApiResponse, SpringPage } from '../types';
+import { AcademicEvent, EventType, ApiResponse } from '../types';
 
 export interface GetEventsParams {
   classroomId?: number;
@@ -10,7 +10,14 @@ export interface GetEventsParams {
   size?: number;
 }
 
-export async function getEvents(params: GetEventsParams = {}): Promise<SpringPage<AcademicEvent>> {
+function normalizeEvent(event: AcademicEvent): AcademicEvent {
+  return {
+    ...event,
+    syncedToCalendar: event.syncedToCalendar ?? false,
+  };
+}
+
+export async function getEvents(params: GetEventsParams = {}): Promise<AcademicEvent[]> {
   const classroomId = params.classroomId || 1;
   const queryParams = new URLSearchParams();
 
@@ -21,22 +28,22 @@ export async function getEvents(params: GetEventsParams = {}): Promise<SpringPag
   if (params.size !== undefined) queryParams.append('size', params.size.toString());
 
   const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-  const response = await api.get<ApiResponse<SpringPage<AcademicEvent>>>(
+  const response = await api.get<ApiResponse<AcademicEvent[]>>(
     `/api/events/classroom/${classroomId}${queryString}`
   );
-  return response.data.data;
+  return response.data.data.map(normalizeEvent);
 }
 
 export async function getUpcomingEvents(classroomId: number = 1): Promise<AcademicEvent[]> {
   const response = await api.get<ApiResponse<AcademicEvent[]>>(
     `/api/events/classroom/${classroomId}/upcoming`
   );
-  return response.data.data;
+  return response.data.data.map(normalizeEvent);
 }
 
 export async function getEventById(id: number): Promise<AcademicEvent> {
   const response = await api.get<ApiResponse<AcademicEvent>>(`/api/events/${id}`);
-  return response.data.data;
+  return normalizeEvent(response.data.data);
 }
 
 export async function createEvent(payload: {
@@ -48,10 +55,9 @@ export async function createEvent(payload: {
   eventDateTime: string;
   durationMinutes: number;
   venue: string;
-  syncToCalendar?: boolean;
 }): Promise<AcademicEvent> {
   const response = await api.post<ApiResponse<AcademicEvent>>('/api/events', payload);
-  return response.data.data;
+  return normalizeEvent(response.data.data);
 }
 
 export async function updateEvent(
@@ -59,7 +65,7 @@ export async function updateEvent(
   payload: Partial<AcademicEvent>
 ): Promise<AcademicEvent> {
   const response = await api.put<ApiResponse<AcademicEvent>>(`/api/events/${id}`, payload);
-  return response.data.data;
+  return normalizeEvent(response.data.data);
 }
 
 export async function deleteEvent(id: number): Promise<void> {

@@ -47,6 +47,8 @@ public class AnnouncementMapper {
     public void updateEntity(Announcement a, AnnouncementDTO.UpdateRequest req) {
         if (req.getTitle() != null)  a.setTitle(req.getTitle());
         if (req.getBody() != null)   a.setBody(req.getBody());
+        if (req.getDepartment() != null) a.setDepartment(req.getDepartment());
+        if (req.getType() != null) a.setType(req.getType());
         if (req.getUrgent() != null) a.setUrgent(req.getUrgent());
     }
 }

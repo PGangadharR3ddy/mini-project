@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   GraduationCap,
   FolderKanban,
+  Mic,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -46,6 +47,16 @@ export const Sidebar: React.FC = () => {
       to: '/projects',
       label: 'Projects',
       icon: FolderKanban,
+    },
+    {
+      to: '/study',
+      label: 'Study Assistant',
+      icon: GraduationCap,
+    },
+    {
+      to: '/ai-studio',
+      label: 'AI Studio',
+      icon: Mic,
     },
   ];
 
@@ -134,4 +145,3 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
-

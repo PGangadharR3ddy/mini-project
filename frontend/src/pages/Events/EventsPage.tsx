@@ -59,7 +59,6 @@ export const EventsPage: React.FC = () => {
     eventDateTime: '2026-08-28T10:00:00',
     durationMinutes: 90,
     venue: 'Hall B',
-    syncToCalendar: true,
   });
 
   const canCreate = canCreateContent(role || undefined);
@@ -67,11 +66,11 @@ export const EventsPage: React.FC = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const pageResult = await getEvents({
+      const result = await getEvents({
         classroomId,
         type: selectedType,
       });
-      setEvents(pageResult.content);
+      setEvents(result);
     } catch (err) {
       console.error('Failed to load events:', err);
       toast.error('Failed to load events');
@@ -94,7 +93,6 @@ export const EventsPage: React.FC = () => {
       eventDateTime: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
       durationMinutes: 90,
       venue: 'Hall B',
-      syncToCalendar: true,
     });
     setIsCreateModalOpen(true);
   };
@@ -109,7 +107,6 @@ export const EventsPage: React.FC = () => {
       eventDateTime: ev.eventDateTime ? ev.eventDateTime.slice(0, 16) : '',
       durationMinutes: ev.durationMinutes || 60,
       venue: ev.venue,
-      syncToCalendar: !!ev.syncToCalendar,
     });
     setIsCreateModalOpen(true);
   };
@@ -360,7 +357,7 @@ export const EventsPage: React.FC = () => {
                           <MapPin className="w-3.5 h-3.5 text-stone-400" />
                           {ev.venue}
                         </span>
-                        {ev.syncToCalendar && (
+                        {ev.syncedToCalendar && (
                           <span className="text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-md">
                             Synced to Calendar
                           </span>
@@ -505,20 +502,6 @@ export const EventsPage: React.FC = () => {
             />
           </div>
 
-          <div className="bg-stone-50 p-3 rounded-xl border border-stone-200">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.syncToCalendar}
-                onChange={(e) => setFormData({ ...formData, syncToCalendar: e.target.checked })}
-                className="w-4 h-4 accent-stone-900 rounded"
-              />
-              <span className="text-xs font-medium text-stone-800">
-                Synchronize to student calendars & generate automated alerts
-              </span>
-            </label>
-          </div>
-
           <div className="pt-4 border-t border-stone-100 flex justify-end gap-3">
             <button
               type="button"
@@ -549,4 +532,3 @@ export const EventsPage: React.FC = () => {
     </div>
   );
 };
-

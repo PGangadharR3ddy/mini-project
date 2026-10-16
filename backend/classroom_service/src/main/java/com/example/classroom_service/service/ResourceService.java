@@ -14,6 +14,7 @@ import com.example.classroom_service.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,6 +82,15 @@ public class ResourceService {
 
     public ResourceDTO.Response getById(Long id) {
         return mapper.toResponse(getOrThrow(id));
+    }
+
+    public FileSystemResource getFile(Long id) {
+        Resource resource = getOrThrow(id);
+        Path filePath = Paths.get(resource.getFileUrl()).toAbsolutePath().normalize();
+        if (!Files.isRegularFile(filePath)) {
+            throw new ResourceNotFoundException("Resource file not found: " + resource.getFileName());
+        }
+        return new FileSystemResource(filePath);
     }
 
     // ─── Update metadata ──────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import {
   INITIAL_EVENTS,
 } from './mockData';
 import { ApiResponse, SpringPage } from '../types';
+import { decodeToken } from '../utils/jwtDecode';
 
 const BASE_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:8082';
 
@@ -22,6 +23,23 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   }
   return config;
 });
+
+export function addDemoIdentityHeaders(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
+  const token = localStorage.getItem('token');
+  if (token && config.headers) {
+    const user = decodeToken(token);
+    if (user) {
+      config.headers.set('X-Demo-User-Id', user.sub);
+      config.headers.set('X-Demo-Name', user.name);
+      config.headers.set('X-Demo-Role', user.role);
+      config.headers.set('X-Demo-Classroom-Id', user.classroomId?.toString() || '');
+      config.headers.set('X-Demo-Department', user.department || '');
+    }
+  }
+  return config;
+}
+
+api.interceptors.request.use(addDemoIdentityHeaders);
 
 // Local storage persistent fallback store to support interactive CRUD operations
 // when backend at http://localhost:8082 is unreachable.
@@ -351,16 +369,7 @@ function handleMockFallback(config: InternalAxiosRequestConfig): ApiResponse<any
         filtered = filtered.filter((e) => e.type.toUpperCase() === type.toUpperCase());
       }
 
-      const pageResult: SpringPage<any> = {
-        content: filtered,
-        totalPages: Math.ceil(filtered.length / 20) || 1,
-        totalElements: filtered.length,
-        size: 20,
-        number: 0,
-        first: true,
-        last: true,
-      };
-      return { success: true, message: 'OK', data: pageResult, timestamp: now };
+      return { success: true, message: 'OK', data: filtered, timestamp: now };
     }
 
     if (method === 'post') {

@@ -72,6 +72,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
+### Frontend Audio Transcription
+
+The main frontend's AI Studio records audio in the browser and sends it to
+`POST /transcribe` on this service. Start the AI service alongside the frontend;
+the frontend defaults to `http://localhost:8000`. To use another service URL,
+set `VITE_AI_SERVICE_URL` in the frontend environment before starting or
+building it. The service must permit the frontend's origin through CORS.
+
 ### Docker (optional)
 
 ```bash

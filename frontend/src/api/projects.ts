@@ -72,6 +72,10 @@ export async function deleteProject(id: number): Promise<void> {
   await api.delete<ApiResponse<null>>(`/api/projects/${id}`);
 }
 
+export async function removeProjectMember(projectId: number, studentId: number): Promise<void> {
+  await api.delete<ApiResponse<null>>(`/api/projects/${projectId}/members/${studentId}`);
+}
+
 export async function getMyProjectRequests(): Promise<ProjectJoinRequest[]> {
   const response = await api.get<ApiResponse<ProjectJoinRequest[]>>('/api/projects/my-requests');
   return response.data.data;

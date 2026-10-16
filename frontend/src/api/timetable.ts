@@ -1,9 +1,26 @@
 import api from './axios';
 import { TimetableSlot, DayOfWeek, ApiResponse } from '../types';
 
+interface WeeklyTimetableDay {
+  day: DayOfWeek;
+  slots: TimetableSlot[];
+}
+
+function isWeeklyTimetableDay(
+  item: TimetableSlot | WeeklyTimetableDay
+): item is WeeklyTimetableDay {
+  return 'slots' in item;
+}
+
+function flattenTimetable(data: TimetableSlot[] | WeeklyTimetableDay[]): TimetableSlot[] {
+  return data.flatMap((item) => isWeeklyTimetableDay(item) ? item.slots : [item]);
+}
+
 export async function getWeeklyTimetable(classroomId: number = 1): Promise<TimetableSlot[]> {
-  const response = await api.get<ApiResponse<TimetableSlot[]>>(`/api/timetable/classroom/${classroomId}/weekly`);
-  return response.data.data;
+  const response = await api.get<ApiResponse<TimetableSlot[] | WeeklyTimetableDay[]>>(
+    `/api/timetable/classroom/${classroomId}/weekly`
+  );
+  return flattenTimetable(response.data.data);
 }
 
 export async function getDayTimetable(classroomId: number = 1, day: DayOfWeek): Promise<TimetableSlot[]> {
@@ -12,8 +29,10 @@ export async function getDayTimetable(classroomId: number = 1, day: DayOfWeek): 
 }
 
 export async function getFacultyWeeklyTimetable(facultyId: number = 101): Promise<TimetableSlot[]> {
-  const response = await api.get<ApiResponse<TimetableSlot[]>>(`/api/timetable/faculty/${facultyId}/weekly`);
-  return response.data.data;
+  const response = await api.get<ApiResponse<TimetableSlot[] | WeeklyTimetableDay[]>>(
+    `/api/timetable/faculty/${facultyId}/weekly`
+  );
+  return flattenTimetable(response.data.data);
 }
 
 export async function createTimetableSlot(payload: Omit<TimetableSlot, 'id'>): Promise<TimetableSlot> {

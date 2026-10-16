@@ -64,6 +64,17 @@ public class AnnouncementService {
         Announcement a = getOrThrow(id);
         ensureOwnerOrAdmin(a, actor);
         mapper.updateEntity(a, req);
+        if (req.getType() != null) {
+            if (req.getType() == Announcement.AnnouncementType.SECTION) {
+                if (req.getClassroomId() != null) {
+                    a.setClassroom(classroomService.getOrThrow(req.getClassroomId()));
+                }
+            } else {
+                a.setClassroom(null);
+            }
+        } else if (req.getClassroomId() != null) {
+            a.setClassroom(classroomService.getOrThrow(req.getClassroomId()));
+        }
         return mapper.toResponse(announcementRepo.save(a));
     }
 

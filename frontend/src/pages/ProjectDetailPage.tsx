@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Github, Globe, Users } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Github, Globe, UserMinus, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import {
   deleteProject,
   getProjectById,
   getProjectRequests,
+  removeProjectMember,
   ProjectUpdatePayload,
   respondToProjectRequest,
   sendProjectJoinRequest,
@@ -40,6 +41,8 @@ export const ProjectDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: number; name: string } | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [joining, setJoining] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
@@ -129,6 +132,21 @@ export const ProjectDetailPage: React.FC = () => {
     }
   };
 
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    setRemovingMemberId(memberToRemove.id);
+    try {
+      await removeProjectMember(projectId, memberToRemove.id);
+      toast.success('Project member removed.');
+      setMemberToRemove(null);
+      await loadProject();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
+
   if (loading) return <Spinner label="Loading project details…" />;
   if (!project) return <EmptyState title="Project not found" description="It may have been removed, or the project ID is invalid." actionText="Back to projects" onAction={() => navigate('/projects')} />;
 
@@ -182,7 +200,21 @@ export const ProjectDetailPage: React.FC = () => {
                   {project.members?.length ? project.members.map((member) => (
                     <div key={member.studentId} className="flex justify-between gap-3 py-2 text-sm">
                       <div><p className="font-bold">{member.studentName}{member.studentId === project.postedBy ? ' · Lead' : ''}</p><p className="text-xs text-stone-500">{member.studentDepartment}</p></div>
-                      <span className="text-xs text-stone-500">{new Date(member.joinedAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-500">{new Date(member.joinedAt).toLocaleDateString()}</span>
+                        {canManage && member.studentId !== project.postedBy && (
+                          <button
+                            type="button"
+                            title={`Remove ${member.studentName}`}
+                            aria-label={`Remove ${member.studentName}`}
+                            disabled={removingMemberId === member.studentId}
+                            onClick={() => setMemberToRemove({ id: member.studentId, name: member.studentName })}
+                            className="p-1 text-stone-500 hover:text-rose-700 disabled:opacity-50"
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )) : <p className="py-2 text-sm text-stone-500">No student members yet.</p>}
                 </div>
@@ -226,6 +258,15 @@ export const ProjectDetailPage: React.FC = () => {
 
       <ProjectFormModal isOpen={editing} onClose={() => setEditing(false)} onSave={handleUpdate} project={project} classrooms={classrooms} userClassroomId={classroomId} />
       <ConfirmDialog isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} onConfirm={() => void handleDelete()} title="Delete project" message="This permanently removes the project and its join requests." isLoading={deleting} />
+      <ConfirmDialog
+        isOpen={!!memberToRemove}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={() => void handleRemoveMember()}
+        title="Remove project member"
+        message={`Remove ${memberToRemove?.name} from this project?`}
+        confirmText="Remove member"
+        isLoading={removingMemberId !== null}
+      />
       <Modal isOpen={joining} onClose={() => setJoining(false)} title="Request to join" subtitle={project.title} maxWidth="md">
         <form onSubmit={handleJoin} className="space-y-4"><label htmlFor="detail-join-message" className="block text-xs font-bold uppercase text-stone-600">Message to the project lead</label><textarea id="detail-join-message" rows={5} required value={joinMessage} onChange={(event) => setJoinMessage(event.target.value)} className="w-full border-2 border-stone-300 p-3 text-sm outline-none focus:border-stone-900" placeholder="Share your interest, skills, and how you could contribute." /><div className="flex justify-end gap-3 border-t-2 border-stone-200 pt-4"><button type="button" onClick={() => setJoining(false)} className="border-2 border-stone-300 px-4 py-2 text-sm font-bold">Cancel</button><button disabled={savingJoin} className="border-2 border-stone-900 bg-stone-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{savingJoin ? 'Sending…' : 'Send request'}</button></div></form>
       </Modal>

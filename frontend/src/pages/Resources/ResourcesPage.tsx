@@ -14,6 +14,7 @@ import {
   uploadResource,
   updateResource,
   deleteResource,
+  getResourceFile,
 } from '../../api/resources';
 import { Resource, ResourceType } from '../../types';
 import { Badge } from '../../components/Badge';
@@ -46,6 +47,7 @@ export const ResourcesPage: React.FC = () => {
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null);
   const [previewVideo, setPreviewVideo] = useState<Resource | null>(null);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -139,6 +141,47 @@ export const ResourcesPage: React.FC = () => {
       toast.error('Failed to delete resource');
     }
   };
+
+  const handleDownloadResource = async (resource: Resource) => {
+    if (/^https?:\/\//i.test(resource.fileUrl)) {
+      window.open(resource.fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    try {
+      const blob = await getResourceFile(resource.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resource.fileName;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error('Failed to download resource:', err);
+      toast.error('Failed to download resource');
+    }
+  };
+
+  const handlePreviewVideo = async (resource: Resource) => {
+    setPreviewVideo(resource);
+    if (/^https?:\/\//i.test(resource.fileUrl)) {
+      setPreviewVideoUrl(resource.fileUrl);
+      return;
+    }
+    try {
+      const blob = await getResourceFile(resource.id);
+      setPreviewVideoUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error('Failed to load resource video:', err);
+      setPreviewVideo(null);
+      toast.error('Failed to load video');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewVideoUrl?.startsWith('blob:')) URL.revokeObjectURL(previewVideoUrl);
+    };
+  }, [previewVideoUrl]);
 
   const filteredList = resources.filter((res) => {
     const matchesSearch =
@@ -257,25 +300,21 @@ export const ResourcesPage: React.FC = () => {
                   <div className="flex items-center justify-between gap-2">
                     {res.type === 'RECORDED_LECTURE' ? (
                       <button
-                        onClick={() => setPreviewVideo(res)}
+                        onClick={() => void handlePreviewVideo(res)}
                         className="flex-1 bg-stone-900 text-white hover:bg-stone-800 rounded-lg py-2 px-3 text-xs font-medium shadow-sm flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <Video className="w-3.5 h-3.5" />
                         <span>Watch Video</span>
                       </button>
                     ) : (
-                      <a
-                        href={res.fileUrl || '#'}
-                        download
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast.success(`Downloading ${res.fileName}`);
-                        }}
+                      <button
+                        type="button"
+                        onClick={() => void handleDownloadResource(res)}
                         className="flex-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-800 rounded-lg py-2 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Download</span>
-                      </a>
+                      </button>
                     )}
 
                     {isUserAuthor && (
@@ -423,7 +462,10 @@ export const ResourcesPage: React.FC = () => {
       {previewVideo && (
         <Modal
           isOpen={!!previewVideo}
-          onClose={() => setPreviewVideo(null)}
+          onClose={() => {
+            setPreviewVideo(null);
+            setPreviewVideoUrl(null);
+          }}
           title={previewVideo.title}
           subtitle={`Video Lecture • ${previewVideo.subject}`}
           maxWidth="2xl"
@@ -434,7 +476,7 @@ export const ResourcesPage: React.FC = () => {
                 controls
                 autoPlay
                 className="w-full h-full object-contain"
-                src={previewVideo.fileUrl}
+                src={previewVideoUrl || undefined}
               >
                 Your browser does not support HTML5 video streaming.
               </video>
@@ -458,4 +500,3 @@ export const ResourcesPage: React.FC = () => {
     </div>
   );
 };
-

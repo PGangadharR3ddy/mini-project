@@ -1,6 +1,31 @@
 import api from './axios';
 import { Resource, ResourceType, ApiResponse, SpringPage } from '../types';
 
+interface BackendResource extends Omit<Resource, 'fileSize' | 'uploadedBy' | 'createdAt'> {
+  fileSizeBytes: number;
+  uploadedBy: number;
+  uploadedByName?: string;
+  uploadedAt: string;
+}
+
+type ResourceResponse = Resource | BackendResource;
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function normalizeResource(resource: ResourceResponse): Resource {
+  if (!('fileSizeBytes' in resource)) return resource;
+  return {
+    ...resource,
+    fileSize: formatFileSize(resource.fileSizeBytes),
+    uploadedBy: resource.uploadedByName || String(resource.uploadedBy),
+    createdAt: resource.uploadedAt,
+  };
+}
+
 export interface GetResourcesParams {
   classroomId?: number;
   subject?: string;
@@ -19,15 +44,18 @@ export async function getResources(params: GetResourcesParams = {}): Promise<Spr
   if (params.size !== undefined) queryParams.append('size', params.size.toString());
 
   const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-  const response = await api.get<ApiResponse<SpringPage<Resource>>>(
+  const response = await api.get<ApiResponse<SpringPage<ResourceResponse>>>(
     `/api/resources/classroom/${classroomId}${queryString}`
   );
-  return response.data.data;
+  return {
+    ...response.data.data,
+    content: response.data.data.content.map(normalizeResource),
+  };
 }
 
 export async function getResourceById(id: number): Promise<Resource> {
-  const response = await api.get<ApiResponse<Resource>>(`/api/resources/${id}`);
-  return response.data.data;
+  const response = await api.get<ApiResponse<ResourceResponse>>(`/api/resources/${id}`);
+  return normalizeResource(response.data.data);
 }
 
 export async function uploadResource(
@@ -48,16 +76,28 @@ export async function uploadResource(
   );
 
   // Do NOT set Content-Type header - browser sets it with multipart boundary
-  const response = await api.post<ApiResponse<Resource>>('/api/resources', formData);
-  return response.data.data;
+  const response = await api.post<ApiResponse<ResourceResponse>>('/api/resources', formData);
+  return normalizeResource(response.data.data);
 }
 
 export async function updateResource(
   id: number,
   payload: Partial<Resource>
 ): Promise<Resource> {
-  const response = await api.put<ApiResponse<Resource>>(`/api/resources/${id}`, payload);
-  return response.data.data;
+  const response = await api.put<ApiResponse<ResourceResponse>>(`/api/resources/${id}`, {
+    title: payload.title,
+    description: payload.description,
+    type: payload.type,
+  });
+  return normalizeResource(response.data.data);
+}
+
+export async function getResourceFile(id: number): Promise<Blob> {
+  const response = await api.get<Blob>(`/api/resources/${id}/file`, {
+    responseType: 'blob',
+    timeout: 300000,
+  });
+  return response.data;
 }
 
 export async function deleteResource(id: number): Promise<void> {

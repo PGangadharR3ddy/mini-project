@@ -17,7 +17,6 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.exceptions import AIServiceException, ai_service_exception_handler, generic_exception_handler
 from app.core.logging_config import configure_logging
-from study_assistant import router as study_router
 
 
 configure_logging()
@@ -25,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     
-
-    app.include_router(study_router)
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description=(

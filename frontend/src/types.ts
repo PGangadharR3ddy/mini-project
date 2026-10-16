@@ -113,7 +113,7 @@ export interface AcademicEvent {
   eventDateTime: string; // ISO 8601
   durationMinutes: number;
   venue: string;
-  syncToCalendar?: boolean;
+  syncedToCalendar?: boolean;
   isUpcoming?: boolean;
   isUrgent?: boolean;
   status?: string;

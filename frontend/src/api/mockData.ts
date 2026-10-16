@@ -349,7 +349,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-08-27T14:00:00',
     durationMinutes: 120,
     venue: 'Hall B',
-    syncToCalendar: true,
     isUpcoming: true,
     isUrgent: true,
   },
@@ -363,7 +362,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-08-27T23:59:00',
     durationMinutes: 0,
     venue: 'Online Submission Portal',
-    syncToCalendar: true,
     isUpcoming: true,
     isUrgent: true,
   },
@@ -377,7 +375,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-08-28T09:00:00',
     durationMinutes: 45,
     venue: 'Seminar Rm 3',
-    syncToCalendar: true,
     isUpcoming: true,
   },
   {
@@ -390,7 +387,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-08-28T11:30:00',
     durationMinutes: 30,
     venue: 'Virtual Link / Studio 2',
-    syncToCalendar: false,
     isUpcoming: true,
   },
   {
@@ -403,7 +399,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-08-29T15:00:00',
     durationMinutes: 90,
     venue: 'Main Auditorium',
-    syncToCalendar: true,
     isUpcoming: true,
   },
   {
@@ -416,7 +411,6 @@ export const INITIAL_EVENTS: AcademicEvent[] = [
     eventDateTime: '2026-09-05T10:00:00',
     durationMinutes: 180,
     venue: 'Panel 3 - Main Auditorium',
-    syncToCalendar: true,
     isUpcoming: true,
   },
 ];
