@@ -59,6 +59,13 @@ class UnsupportedFileTypeError(AIServiceException):
         super().__init__(message, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
 
+class AudioFileTooLargeError(AIServiceException):
+    """Raised when an audio upload exceeds the configured size limit."""
+
+    def __init__(self, message: str = "Audio file exceeds the maximum allowed size"):
+        super().__init__(message, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
+
 async def ai_service_exception_handler(request: Request, exc: AIServiceException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,

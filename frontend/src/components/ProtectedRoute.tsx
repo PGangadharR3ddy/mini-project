@@ -12,7 +12,7 @@ export const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfbf9] text-stone-900 flex">
+    <div className="app-shell min-h-screen bg-[#fcfbf9] text-stone-900 flex">
       {/* Fixed Left Sidebar */}
       <Sidebar />
 
@@ -22,11 +22,10 @@ export const ProtectedLayout: React.FC = () => {
         <Navbar />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 pt-20 p-8 max-w-7xl w-full mx-auto">
+        <main className="app-content flex-1 pt-20 p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
-

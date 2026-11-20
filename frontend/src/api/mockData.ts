@@ -76,6 +76,20 @@ export const INITIAL_CLASSROOMS: ClassroomDetail[] = [
     totalLecturesToday: 3,
     pendingGrading: 28,
   },
+  {
+    id: 5,
+    name: 'AIML-B',
+    section: 'B',
+    department: 'AIML',
+    year: 2,
+    semester: 3,
+    capacity: 100,
+    studentCount: 0,
+    academicYear: '2024-2025',
+    syllabusProgress: 0,
+    totalLecturesToday: 0,
+    pendingGrading: 0,
+  },
 ];
 
 export const INITIAL_TIMETABLE: TimetableSlot[] = [
@@ -118,7 +132,7 @@ export const INITIAL_TIMETABLE: TimetableSlot[] = [
     facultyId: 103,
     facultyName: 'Admin Committee',
     roomNumber: 'Admin Block, Room 201',
-    type: 'SEMINAR',
+    type: 'TUTORIAL',
   },
   {
     id: 4,

@@ -1,9 +1,22 @@
 import api from './axios';
 import { Classroom, ClassroomDetail, ApiResponse } from '../types';
 
+type BackendClassroomDetail = ClassroomDetail & {
+  classroomNumber?: string;
+};
+
+function normalizeClassroomDetail(classroom: BackendClassroomDetail): ClassroomDetail {
+  return {
+    ...classroom,
+    roomNumber: classroom.roomNumber ?? classroom.classroomNumber,
+  };
+}
+
 export async function getClassroomDetail(classroomId: number = 1): Promise<ClassroomDetail> {
-  const response = await api.get<ApiResponse<ClassroomDetail>>(`/api/classrooms/${classroomId}/detail`);
-  return response.data.data;
+  const response = await api.get<ApiResponse<BackendClassroomDetail>>(
+    `/api/classrooms/${classroomId}/detail`
+  );
+  return normalizeClassroomDetail(response.data.data);
 }
 
 export async function getClassrooms(department?: string): Promise<Classroom[]> {

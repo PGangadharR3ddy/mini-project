@@ -43,7 +43,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfbf9] text-stone-900 flex flex-col justify-between p-6 md:p-12 relative select-none">
+    <div className="app-auth min-h-screen bg-[#fcfbf9] text-stone-900 flex flex-col justify-between p-6 md:p-12 relative select-none">
       {/* Top Header */}
       <header className="flex items-center justify-between z-10 max-w-5xl mx-auto w-full">
         <div className="flex items-center gap-3">
@@ -205,4 +205,3 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
-

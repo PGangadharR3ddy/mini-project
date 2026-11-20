@@ -26,6 +26,7 @@ import { formatTime, formatTimeRange, getTodayDayOfWeek } from '../../utils/date
 import toast from 'react-hot-toast';
 
 const DAYS_OF_WEEK: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+type TimetableSlotType = NonNullable<TimetableSlot['type']>;
 
 export const TimetablePage: React.FC = () => {
   const { role, user, classroomId } = useAuth();
@@ -53,7 +54,7 @@ export const TimetablePage: React.FC = () => {
     facultyName: user?.name || 'Dr. Sarah Müller',
     facultyId: 101,
     roomNumber: 'Hall C',
-    type: 'LECTURE' as 'LECTURE' | 'LAB' | 'SEMINAR',
+    type: 'LECTURE' as TimetableSlotType,
   });
 
   const canEdit = canCreateContent(role || undefined);
@@ -102,7 +103,7 @@ export const TimetablePage: React.FC = () => {
       facultyName: slot.facultyName,
       facultyId: slot.facultyId,
       roomNumber: slot.roomNumber,
-      type: (slot.type as any) || 'LECTURE',
+      type: slot.type === 'SEMINAR' ? 'TUTORIAL' : slot.type || 'LECTURE',
     });
     setIsAddModalOpen(true);
   };
@@ -150,7 +151,7 @@ export const TimetablePage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+      <div className="app-page-banner flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-md">
@@ -441,12 +442,12 @@ export const TimetablePage: React.FC = () => {
               </label>
               <select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as TimetableSlotType })}
                 className="w-full bg-stone-50 border border-stone-200 rounded-lg p-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:ring-1 focus:ring-stone-900"
               >
                 <option value="LECTURE">Lecture</option>
                 <option value="LAB">Laboratory</option>
-                <option value="SEMINAR">Seminar</option>
+                <option value="TUTORIAL">Tutorial</option>
               </select>
             </div>
           </div>
@@ -566,4 +567,3 @@ export const TimetablePage: React.FC = () => {
     </div>
   );
 };
-

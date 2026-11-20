@@ -68,11 +68,6 @@ export async function getStudyHealth(): Promise<StudyHealth> {
   return response.data.data;
 }
 
-export async function getMyStudyDocuments(): Promise<StudyDocument[]> {
-  const response = await studyApi.get<ApiResponse<StudyDocument[]>>('/api/study/documents');
-  return response.data.data;
-}
-
 export async function uploadStudyDocument(
   file: File,
   classroomId?: number

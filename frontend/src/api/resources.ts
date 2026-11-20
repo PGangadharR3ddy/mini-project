@@ -76,7 +76,9 @@ export async function uploadResource(
   );
 
   // Do NOT set Content-Type header - browser sets it with multipart boundary
-  const response = await api.post<ApiResponse<ResourceResponse>>('/api/resources', formData);
+  const response = await api.post<ApiResponse<ResourceResponse>>('/api/resources', formData, {
+    timeout: 300000,
+  });
   return normalizeResource(response.data.data);
 }
 

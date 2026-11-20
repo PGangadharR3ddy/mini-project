@@ -11,9 +11,18 @@ from app.core.exceptions import SummarizationError
 
 logger = logging.getLogger(__name__)
 
-# FLAN-T5 is instruction-tuned, so prompting it with a task instruction
-# yields noticeably better summaries than passing raw text alone.
-SUMMARY_PROMPT_TEMPLATE = "Summarize the following lecture transcript in a clear and concise way:\n\n{text}"
+SUMMARY_PROMPT_TEMPLATE = (
+    "Write a moderately detailed summary for a student as a natural paragraph "
+    "of 3 to 5 complete sentences. Include the main topic and its important "
+    "supporting details, and explain how the ideas relate. Use a neutral, "
+    "declarative voice. Start with 'The lecture explains' and continue with "
+    "factual statements such as 'It also describes'. Do not address or "
+    "instruct the reader, and do not begin sentences with commands such as "
+    "'Learn' or 'Understand'. Avoid repetition and include only facts from "
+    "the transcript.\n\n"
+    "Lecture transcript:\n{text}\n\n"
+    "Summary:"
+)
 
 # Very long transcripts are chunked and summarized in parts, then combined,
 # to stay within the model's token limit.
@@ -48,15 +57,23 @@ class SummarizationService:
     def _summarize_chunk(self, text: str, tokenizer, model, device) -> str:
         prompt = SUMMARY_PROMPT_TEMPLATE.format(text=text)
         inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024).to(device)
+        source_token_count = len(tokenizer.encode(text, add_special_tokens=False))
+        min_length = min(
+            settings.SUMMARY_MIN_LENGTH,
+            max(5, source_token_count // 3),
+            settings.SUMMARY_MAX_LENGTH,
+        )
 
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
                 max_length=settings.SUMMARY_MAX_LENGTH,
-                min_length=settings.SUMMARY_MIN_LENGTH,
+                min_length=min_length,
                 num_beams=4,
-                length_penalty=2.0,
+                length_penalty=1.0,
                 early_stopping=True,
+                no_repeat_ngram_size=3,
+                repetition_penalty=1.2,
             )
 
         summary = tokenizer.decode(output_ids[0], skip_special_tokens=True).strip()

@@ -50,6 +50,7 @@ const LOCAL_STORAGE_KEYS = {
   resources: 'scms_mock_resources',
   events: 'scms_mock_events',
 };
+const AIML_CLASSROOM_MIGRATION_KEY = 'scms_mock_aiml_classroom_v1';
 
 function getStored<T>(key: string, initial: T): T {
   try {
@@ -72,6 +73,100 @@ function setStored<T>(key: string, data: T): void {
   }
 }
 
+const RESOURCE_FILES_DB = 'scms_mock_resource_files';
+const RESOURCE_FILES_STORE = 'files';
+
+function openResourceFilesDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(RESOURCE_FILES_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(RESOURCE_FILES_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function storeMockResourceFile(id: number, file: Blob): Promise<void> {
+  const db = await openResourceFilesDb();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(RESOURCE_FILES_STORE, 'readwrite');
+    transaction.objectStore(RESOURCE_FILES_STORE).put(file, id);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  }).finally(() => db.close());
+}
+
+async function getMockResourceFile(id: number): Promise<Blob | undefined> {
+  const db = await openResourceFilesDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(RESOURCE_FILES_STORE, 'readonly');
+    const request = transaction.objectStore(RESOURCE_FILES_STORE).get(id);
+    request.onsuccess = () => resolve(request.result as Blob | undefined);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+    transaction.onabort = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function removeMockResourceFile(id: number): Promise<void> {
+  const db = await openResourceFilesDb();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(RESOURCE_FILES_STORE, 'readwrite');
+    transaction.objectStore(RESOURCE_FILES_STORE).delete(id);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  }).finally(() => db.close());
+}
+
+async function handleMockResourceUpload(config: InternalAxiosRequestConfig): Promise<ApiResponse<any>> {
+  if (!(config.data instanceof FormData)) {
+    throw new Error('Resource upload requires a file and metadata.');
+  }
+
+  const metadataPart = config.data.get('metadata');
+  const filePart = config.data.get('file');
+  if (!(filePart instanceof File) || !filePart.size) {
+    throw new Error('Choose a non-empty file to upload.');
+  }
+  if (!metadataPart) {
+    throw new Error('Resource details are missing.');
+  }
+
+  const metadata = typeof metadataPart === 'string'
+    ? JSON.parse(metadataPart)
+    : JSON.parse(await metadataPart.text());
+  const id = Date.now();
+  await storeMockResourceFile(id, filePart);
+
+  const now = new Date().toISOString();
+  const uploader = decodeToken(localStorage.getItem('token') || '');
+  const resource = {
+    ...metadata,
+    id,
+    fileName: filePart.name,
+    fileSize: filePart.size < 1024 * 1024
+      ? `${(filePart.size / 1024).toFixed(1)} KB`
+      : `${(filePart.size / (1024 * 1024)).toFixed(1)} MB`,
+    fileUrl: `mock://resources/${id}`,
+    uploadedBy: uploader?.name || 'Current user',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const resources = getStored(LOCAL_STORAGE_KEYS.resources, INITIAL_RESOURCES);
+  setStored(LOCAL_STORAGE_KEYS.resources, [resource, ...resources]);
+  return { success: true, message: 'Resource uploaded successfully', data: resource, timestamp: now };
+}
+
 // Fallback Mock Response Dispatcher
 function handleMockFallback(config: InternalAxiosRequestConfig): ApiResponse<any> {
   const url = config.url || '';
@@ -81,6 +176,23 @@ function handleMockFallback(config: InternalAxiosRequestConfig): ApiResponse<any
   // 1. CLASSROOMS
   if (url.startsWith('/api/classrooms')) {
     let list = getStored(LOCAL_STORAGE_KEYS.classrooms, INITIAL_CLASSROOMS);
+    try {
+      if (localStorage.getItem(AIML_CLASSROOM_MIGRATION_KEY) !== 'done') {
+        const aimlClassroom = INITIAL_CLASSROOMS.find(
+          (classroom) => classroom.name === 'AIML-B' && classroom.department === 'AIML'
+        );
+        if (aimlClassroom && !list.some(
+          (classroom) => classroom.name === aimlClassroom.name
+            && classroom.department === aimlClassroom.department
+        )) {
+          list = [...list, aimlClassroom];
+          setStored(LOCAL_STORAGE_KEYS.classrooms, list);
+        }
+        localStorage.setItem(AIML_CLASSROOM_MIGRATION_KEY, 'done');
+      }
+    } catch (error) {
+      console.error('Failed to migrate the AIML-B demo classroom:', error);
+    }
 
     // GET /api/classrooms/1/detail or /api/classrooms/:id
     const detailMatch = url.match(/\/api\/classrooms\/(\d+)(\/detail)?/);
@@ -135,6 +247,16 @@ function handleMockFallback(config: InternalAxiosRequestConfig): ApiResponse<any
   // 2. TIMETABLE
   if (url.startsWith('/api/timetable')) {
     let list = getStored(LOCAL_STORAGE_KEYS.timetable, INITIAL_TIMETABLE);
+    if (list.some((slot) => slot.subjectCode === 'DEPT'
+      && slot.subject === 'Curriculum Review Meeting'
+      && slot.type === 'SEMINAR')) {
+      list = list.map((slot) =>
+        slot.subjectCode === 'DEPT' && slot.subject === 'Curriculum Review Meeting'
+          ? { ...slot, type: 'TUTORIAL' }
+          : slot
+      );
+      setStored(LOCAL_STORAGE_KEYS.timetable, list);
+    }
 
     if (url.includes('/weekly') || url.includes('/day/')) {
       const dayMatch = url.match(/\/day\/([A-Z]+)/);
@@ -417,6 +539,41 @@ api.interceptors.response.use(
     // serve fallback mock data so app remains fully interactive and testable.
     if (!error.response && error.config) {
       console.warn(`[SCMS API] Backend at ${BASE_URL} not reachable. Serving simulated fallback data.`);
+      const resourceFileMatch = error.config.url?.match(/^\/api\/resources\/(\d+)\/file(?:\?.*)?$/);
+      if (resourceFileMatch && error.config.method?.toLowerCase() === 'get') {
+        const file = await getMockResourceFile(Number(resourceFileMatch[1]));
+        if (!file) {
+          return Promise.reject(new Error('The uploaded resource file is not available in local storage.'));
+        }
+        return {
+          data: file,
+          status: 200,
+          statusText: 'OK (Local Fallback)',
+          headers: {},
+          config: error.config,
+        };
+      }
+
+      const resourceDeleteMatch = error.config.url?.match(/^\/api\/resources\/(\d+)$/);
+      if (resourceDeleteMatch && error.config.method?.toLowerCase() === 'delete') {
+        await removeMockResourceFile(Number(resourceDeleteMatch[1]));
+      }
+
+      if (error.config.url === '/api/resources' && error.config.method?.toLowerCase() === 'post') {
+        try {
+          const mockResult = await handleMockResourceUpload(error.config);
+          return {
+            data: mockResult,
+            status: 200,
+            statusText: 'OK (Local Fallback)',
+            headers: {},
+            config: error.config,
+          };
+        } catch (fallbackError) {
+          return Promise.reject(fallbackError);
+        }
+      }
+
       const mockResult = handleMockFallback(error.config);
       return {
         data: mockResult,

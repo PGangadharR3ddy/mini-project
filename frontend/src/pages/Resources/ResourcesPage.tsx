@@ -24,6 +24,8 @@ import { CardSkeleton, EmptyState } from '../../components/Loader';
 import { canCreateContent, canEditContent } from '../../utils/roleGuard';
 import toast from 'react-hot-toast';
 
+const MAX_RESOURCE_FILE_SIZE = 50 * 1024 * 1024;
+
 const RESOURCE_TYPES: { label: string; value: string }[] = [
   { label: 'All Resources', value: 'ALL' },
   { label: 'Lecture Notes', value: 'NOTES' },
@@ -57,6 +59,7 @@ export const ResourcesPage: React.FC = () => {
     type: 'NOTES' as ResourceType,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canUpload = canCreateContent(role || undefined);
@@ -107,6 +110,7 @@ export const ResourcesPage: React.FC = () => {
 
   const handleSaveResource = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingResource) {
         await updateResource(editingResource.id, formData);
@@ -126,7 +130,9 @@ export const ResourcesPage: React.FC = () => {
       setIsUploadModalOpen(false);
       fetchResources();
     } catch (err) {
-      toast.error('Failed to save resource');
+      toast.error(err instanceof Error ? err.message : 'Failed to save resource');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -195,7 +201,7 @@ export const ResourcesPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+      <div className="app-page-banner flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-md">
@@ -363,7 +369,16 @@ export const ResourcesPage: React.FC = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (file && file.size > MAX_RESOURCE_FILE_SIZE) {
+                      toast.error('Files must be 50 MB or smaller');
+                      e.target.value = '';
+                      setSelectedFile(null);
+                      return;
+                    }
+                    setSelectedFile(file);
+                  }}
                   className="hidden"
                 />
                 <Upload className="w-7 h-7 mx-auto mb-2 text-stone-400" />
@@ -373,7 +388,7 @@ export const ResourcesPage: React.FC = () => {
                 <p className="text-[11px] text-stone-500 mt-1">
                   {selectedFile
                     ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
-                    : 'Max 250MB • All academic formats supported'}
+                    : 'Max 50 MB • All academic formats supported'}
                 </p>
               </div>
             </div>
@@ -450,9 +465,16 @@ export const ResourcesPage: React.FC = () => {
             </button>
             <button
               type="submit"
+              disabled={isSaving}
               className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-lg text-xs font-medium shadow-sm transition-colors"
             >
-              {editingResource ? 'Save Changes' : 'Upload Resource'}
+              {isSaving
+                ? editingResource
+                  ? 'Saving...'
+                  : 'Uploading...'
+                : editingResource
+                  ? 'Save Changes'
+                  : 'Upload Resource'}
             </button>
           </div>
         </form>

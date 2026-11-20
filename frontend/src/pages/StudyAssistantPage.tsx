@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import {
   Bot,
@@ -14,7 +14,6 @@ import {
 import toast from 'react-hot-toast';
 import {
   askStudyDocumentQuestion,
-  getMyStudyDocuments,
   getStudyHealth,
   StudyDocument,
   StudyHealth,
@@ -48,7 +47,6 @@ export function StudyAssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [loadingDocuments, setLoadingDocuments] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [asking, setAsking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,30 +54,13 @@ export function StudyAssistantPage() {
 
   const activeDocument = documents.find((document) => document.documentId === activeDocumentId);
 
-  const refreshDocuments = useCallback(async () => {
-    const result = await getMyStudyDocuments();
-    setDocuments(result);
-    setActiveDocumentId((currentId) =>
-      result.some((document) => document.documentId === currentId)
-        ? currentId
-        : result[0]?.documentId || ''
-    );
-  }, []);
-
   useEffect(() => {
     let mounted = true;
-    Promise.allSettled([getStudyHealth(), getMyStudyDocuments()]).then(([healthResult, docsResult]) => {
+    Promise.allSettled([getStudyHealth()]).then(([healthResult]) => {
       if (!mounted) return;
       if (healthResult.status === 'fulfilled') {
         setHealth(healthResult.value);
       }
-      if (docsResult.status === 'fulfilled') {
-        setDocuments(docsResult.value);
-        setActiveDocumentId(docsResult.value[0]?.documentId || '');
-      } else {
-        toast.error(getErrorMessage(docsResult.reason, 'Could not load your documents.'));
-      }
-      setLoadingDocuments(false);
     });
     return () => {
       mounted = false;
@@ -122,11 +103,6 @@ export function StudyAssistantPage() {
       setMessages([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
       toast.success(`Indexed ${uploaded.filename} (${uploaded.chunksIndexed ?? 0} chunks).`);
-      try {
-        setDocuments(await getMyStudyDocuments());
-      } catch (error) {
-        toast.error(getErrorMessage(error, 'The PDF was indexed, but the document list could not refresh.'));
-      }
     } catch (error) {
       toast.error(getErrorMessage(error, 'PDF upload failed.'));
     } finally {
@@ -177,7 +153,7 @@ export function StudyAssistantPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 rounded-xl border-2 border-stone-900 bg-[#faf9f4] p-6 shadow-[4px_4px_0_0_#1b1c19] sm:flex-row sm:items-center sm:justify-between">
+      <header className="app-page-banner flex flex-col gap-4 rounded-xl border-2 border-stone-900 bg-[#faf9f4] p-6 shadow-[4px_4px_0_0_#1b1c19] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center border-2 border-stone-900 bg-emerald-300">
             <Bot className="h-6 w-6" />
@@ -265,14 +241,12 @@ export function StudyAssistantPage() {
           <section className="border-2 border-stone-900 bg-white p-5 shadow-[3px_3px_0_0_#1b1c19]">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-base font-bold">
-                <FileText className="h-4 w-4" /> Your documents
+                <FileText className="h-4 w-4" /> This session
               </h2>
               <span className="text-xs text-stone-500">{documents.length}</span>
             </div>
-            {loadingDocuments ? (
-              <p className="text-sm text-stone-500">Loading documents…</p>
-            ) : documents.length === 0 ? (
-              <p className="text-sm text-stone-500">Upload a PDF to start a document chat.</p>
+            {documents.length === 0 ? (
+              <p className="text-sm text-stone-500">Upload a PDF in this session to start a document chat.</p>
             ) : (
               <ul className="max-h-[420px] space-y-2 overflow-y-auto">
                 {documents.map((document) => (
@@ -309,12 +283,12 @@ export function StudyAssistantPage() {
             <MessageSquare className="h-5 w-5 shrink-0" />
             <div className="min-w-0">
               <h2 className="truncate font-bold">
-                {activeDocument?.filename || 'Choose a document to chat'}
+                {activeDocument?.filename || 'Upload a document to chat'}
               </h2>
               <p className="text-xs text-stone-600">
                 {activeDocument
                   ? 'Answers are retrieved from this PDF.'
-                  : 'Upload a PDF or select one from your documents.'}
+                  : 'Previously uploaded PDFs are not available in this session.'}
               </p>
             </div>
           </div>
@@ -324,6 +298,7 @@ export function StudyAssistantPage() {
               <div className="flex h-full min-h-64 flex-col items-center justify-center text-center text-stone-500">
                 <Bot className="mb-3 h-10 w-10" />
                 <p className="font-bold">Your document chat starts here</p>
+                <p className="mt-1 text-sm">Upload a PDF to use it in this session.</p>
               </div>
             )}
             {activeDocument && messages.length === 0 && (
@@ -379,7 +354,7 @@ export function StudyAssistantPage() {
               onChange={(event) => setQuestion(event.target.value)}
               disabled={!activeDocument || asking}
               minLength={3}
-              placeholder={activeDocument ? 'Ask a question about this PDF…' : 'Select a document first'}
+              placeholder={activeDocument ? 'Ask a question about this PDF…' : 'Upload a document first'}
               className="min-w-0 flex-1 border-2 border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-900 disabled:bg-stone-100"
             />
             <button

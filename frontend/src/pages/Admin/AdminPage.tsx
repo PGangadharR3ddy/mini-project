@@ -19,6 +19,13 @@ import { CardSkeleton, EmptyState } from '../../components/Loader';
 import { canManageClassrooms } from '../../utils/roleGuard';
 import toast from 'react-hot-toast';
 
+const DEPARTMENT_OPTIONS = [
+  { value: 'CSE', label: 'Computer Science (CSE)' },
+  { value: 'ECE', label: 'Electronics (ECE)' },
+  { value: 'MECH', label: 'Mechanical (MECH)' },
+  { value: 'AIML', label: 'AI & Machine Learning (AIML)' },
+];
+
 export const AdminPage: React.FC = () => {
   const { role, switchDemoRole } = useAuth();
   const isAdmin = canManageClassrooms(role || undefined);
@@ -149,7 +156,7 @@ export const AdminPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+      <div className="app-page-banner flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/70 px-2 py-0.5 rounded-md">
@@ -176,7 +183,7 @@ export const AdminPage: React.FC = () => {
       {/* Department Filters */}
       <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm flex flex-wrap gap-2 items-center justify-between">
         <div className="flex flex-wrap gap-1.5">
-          {['ALL', 'CSE', 'ECE', 'MECH'].map((dept) => (
+          {['ALL', ...DEPARTMENT_OPTIONS.map(({ value }) => value)].map((dept) => (
             <button
               key={dept}
               onClick={() => setSelectedDept(dept)}
@@ -234,7 +241,7 @@ export const AdminPage: React.FC = () => {
                 <div className="bg-stone-50 border border-stone-200/70 rounded-xl p-3 space-y-1.5 text-xs text-stone-700">
                   <div className="flex justify-between">
                     <span className="text-stone-500">Student Strength:</span>
-                    <span className="font-medium text-stone-900">{cls.studentCount || 114} / {cls.capacity || 120}</span>
+                    <span className="font-medium text-stone-900">{cls.studentCount ?? 114} / {cls.capacity ?? 120}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-stone-500">Classroom ID:</span>
@@ -297,9 +304,9 @@ export const AdminPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                 className="w-full bg-stone-50 border border-stone-200 rounded-lg p-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:ring-1 focus:ring-stone-900"
               >
-                <option value="CSE">Computer Science (CSE)</option>
-                <option value="ECE">Electronics (ECE)</option>
-                <option value="MECH">Mechanical (MECH)</option>
+                {DEPARTMENT_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
 
@@ -384,4 +391,3 @@ export const AdminPage: React.FC = () => {
     </div>
   );
 };
-

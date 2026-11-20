@@ -1,6 +1,17 @@
 import api from './axios';
 import { Announcement, ApiResponse, SpringPage } from '../types';
 
+type BackendAnnouncement = Announcement & {
+  createdByName?: string;
+};
+
+function normalizeAnnouncement(announcement: BackendAnnouncement): Announcement {
+  return {
+    ...announcement,
+    postedBy: announcement.postedBy ?? announcement.createdByName,
+  };
+}
+
 export interface GetAnnouncementsParams {
   classroomId?: number | null;
   department?: string;
@@ -14,10 +25,13 @@ export async function getAnnouncementFeed(
   page: number = 0,
   size: number = 20
 ): Promise<SpringPage<Announcement>> {
-  const response = await api.get<ApiResponse<SpringPage<Announcement>>>(
+  const response = await api.get<ApiResponse<SpringPage<BackendAnnouncement>>>(
     `/api/announcements/feed?classroomId=${classroomId}&department=${encodeURIComponent(department)}&page=${page}&size=${size}`
   );
-  return response.data.data;
+  return {
+    ...response.data.data,
+    content: response.data.data.content.map(normalizeAnnouncement),
+  };
 }
 
 export async function getClassroomAnnouncements(
@@ -25,15 +39,18 @@ export async function getClassroomAnnouncements(
   page: number = 0,
   size: number = 20
 ): Promise<SpringPage<Announcement>> {
-  const response = await api.get<ApiResponse<SpringPage<Announcement>>>(
+  const response = await api.get<ApiResponse<SpringPage<BackendAnnouncement>>>(
     `/api/announcements/classroom/${classroomId}?page=${page}&size=${size}`
   );
-  return response.data.data;
+  return {
+    ...response.data.data,
+    content: response.data.data.content.map(normalizeAnnouncement),
+  };
 }
 
 export async function getAnnouncementById(id: number): Promise<Announcement> {
-  const response = await api.get<ApiResponse<Announcement>>(`/api/announcements/${id}`);
-  return response.data.data;
+  const response = await api.get<ApiResponse<BackendAnnouncement>>(`/api/announcements/${id}`);
+  return normalizeAnnouncement(response.data.data);
 }
 
 export async function createAnnouncement(payload: {

@@ -120,7 +120,7 @@ export const ProjectsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      <header className="flex flex-col justify-between gap-4 border-2 border-stone-900 bg-[#f1efe6] p-5 sm:flex-row sm:items-center sm:p-7 shadow-[4px_4px_0_0_#1b1c19]">
+      <header className="app-page-banner flex flex-col justify-between gap-4 border-2 border-stone-900 bg-[#f1efe6] p-5 sm:flex-row sm:items-center sm:p-7 shadow-[4px_4px_0_0_#1b1c19]">
         <div className="flex items-start gap-3">
           <FolderKanban className="mt-1 h-6 w-6 shrink-0 text-emerald-800" />
           <div>

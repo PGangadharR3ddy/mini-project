@@ -74,11 +74,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Frontend Audio Transcription
 
-The main frontend's AI Studio records audio in the browser and sends it to
-`POST /transcribe` on this service. Start the AI service alongside the frontend;
-the frontend defaults to `http://localhost:8000`. To use another service URL,
-set `VITE_AI_SERVICE_URL` in the frontend environment before starting or
-building it. The service must permit the frontend's origin through CORS.
+The main frontend's AI Studio records audio in the browser or accepts an audio
+upload, sends it to `POST /transcribe`, and can summarize the returned transcript
+through `POST /summarize`. Transcription responses include the detected language,
+duration, model name, and timestamped segments. Start the AI service alongside
+the frontend; the frontend defaults to `http://localhost:8000`. To use another
+service URL, set `VITE_AI_SERVICE_URL` in the frontend environment before
+starting or building it. The service must permit the frontend's origin through
+CORS.
 
 ### Docker (optional)
 

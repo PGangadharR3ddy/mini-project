@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type DragEvent, useEffect, useRef, useState } from 'react';
 import {
   Check,
   Copy,
@@ -8,19 +8,30 @@ import {
   RotateCcw,
   Sparkles,
   Square,
+  Upload,
   Volume2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { transcribeAudio } from '../api/transcription';
+import {
+  isSupportedAudioFile,
+  MAX_TRANSCRIPTION_FILE_SIZE_BYTES,
+  summarizeTranscript,
+  transcribeAudio,
+} from '../api/transcription';
 
 export function AIStudioPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioFileName, setAudioFileName] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
   const [transcription, setTranscription] = useState('');
+  const [summary, setSummary] = useState('');
   const [copied, setCopied] = useState(false);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -52,7 +63,9 @@ export function AIStudioPage() {
       chunksRef.current = [];
       setAudioBlob(null);
       setAudioUrl(null);
+      setAudioFileName('');
       setTranscription('');
+      setSummary('');
       setCopied(false);
 
       const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
@@ -71,6 +84,7 @@ export function AIStudioPage() {
         });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
+        setAudioFileName('Browser recording');
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       };
@@ -94,10 +108,48 @@ export function AIStudioPage() {
     setIsRecording(false);
   };
 
+  const selectAudioFile = (file?: File) => {
+    if (!file) return;
+    if (isTranscribing || isSummarizing) {
+      toast.error('Wait for the current AI task to finish before changing audio.');
+      return;
+    }
+    if (isRecording) {
+      toast.error('Stop the current recording before selecting another audio file.');
+      return;
+    }
+    if (!isSupportedAudioFile(file)) {
+      toast.error('Unsupported audio format. Use MP3, WAV, M4A, MP4, MPEG, OGG, FLAC, or WebM.');
+      return;
+    }
+    if (file.size === 0) {
+      toast.error('The audio file is empty.');
+      return;
+    }
+    if (file.size > MAX_TRANSCRIPTION_FILE_SIZE_BYTES) {
+      toast.error('Audio files must be 200 MB or smaller.');
+      return;
+    }
+    setAudioBlob(file);
+    setAudioUrl(URL.createObjectURL(file));
+    setAudioFileName(file.name);
+    setRecordingDuration(0);
+    setTranscription('');
+    setSummary('');
+    setCopied(false);
+  };
+
+  const handleAudioDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingAudio(false);
+    selectAudioFile(event.dataTransfer.files[0]);
+  };
+
   const handleTranscribe = async () => {
     if (!audioBlob || isTranscribing) return;
 
     setIsTranscribing(true);
+    setSummary('');
     try {
       const result = await transcribeAudio(audioBlob);
       setTranscription(result.transcript);
@@ -110,10 +162,32 @@ export function AIStudioPage() {
     }
   };
 
+  const handleSummarize = async () => {
+    if (!transcription || isSummarizing) return;
+    if (transcription.trim().length < 20) {
+      toast.error('The transcript is too short to summarize.');
+      return;
+    }
+
+    setIsSummarizing(true);
+    try {
+      const result = await summarizeTranscript(transcription);
+      setSummary(result.summary);
+      toast.success('Transcript summarized successfully.');
+    } catch (error) {
+      console.error('Transcript summarization failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to summarize transcript.');
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   const resetSession = () => {
     setAudioBlob(null);
     setAudioUrl(null);
+    setAudioFileName('');
     setTranscription('');
+    setSummary('');
     setRecordingDuration(0);
     setCopied(false);
   };
@@ -135,7 +209,7 @@ export function AIStudioPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+      <header className="app-page-banner flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
@@ -147,14 +221,14 @@ export function AIStudioPage() {
             Audio Transcription
           </h1>
           <p className="text-xs text-stone-500 mt-1">
-            Record a lecture or voice note and turn it into text.
+            Record a lecture or upload an audio file to turn it into text.
           </p>
         </div>
         {audioBlob && (
           <button
             type="button"
             onClick={resetSession}
-            disabled={isTranscribing}
+            disabled={isTranscribing || isSummarizing}
             className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-stone-700 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -169,14 +243,39 @@ export function AIStudioPage() {
             <Mic className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-stone-900">Record audio</h2>
+            <h2 className="text-base font-semibold text-stone-900">Add audio</h2>
             <p className="text-xs text-stone-500">
               Your recording is transcribed by the classroom AI service.
             </p>
           </div>
         </div>
 
-        <div className="bg-stone-50 rounded-2xl p-6 border border-stone-200 flex flex-col items-center justify-center gap-4 text-center">
+        <div
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDraggingAudio(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsDraggingAudio(false);
+            }
+          }}
+          onDrop={handleAudioDrop}
+          className={`bg-stone-50 rounded-2xl p-6 border flex flex-col items-center justify-center gap-4 text-center transition-colors ${
+            isDraggingAudio ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200'
+          }`}
+        >
+          <input
+            ref={audioInputRef}
+            type="file"
+            accept=".mp3,.wav,.m4a,.mp4,.mpeg,.mpga,.webm,.ogg,.flac,audio/*"
+            className="hidden"
+            onChange={(event) => {
+              selectAudioFile(event.target.files?.[0]);
+              event.target.value = '';
+            }}
+          />
           {isRecording ? (
             <>
               <button
@@ -199,7 +298,7 @@ export function AIStudioPage() {
               <button
                 type="button"
                 onClick={startRecording}
-                disabled={isTranscribing}
+                disabled={isTranscribing || isSummarizing}
                 aria-label="Start recording"
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-stone-900 hover:bg-stone-800 text-white shadow-md transition-colors"
               >
@@ -211,22 +310,35 @@ export function AIStudioPage() {
                   Allow microphone access when your browser asks.
                 </p>
               </div>
+              <span className="text-xs text-stone-400">or</span>
+              <button
+                type="button"
+                onClick={() => audioInputRef.current?.click()}
+                disabled={isTranscribing || isSummarizing}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg transition-colors disabled:opacity-60"
+              >
+                <Upload className="w-4 h-4" />
+                Choose an audio file
+              </button>
+              <p className="text-xs text-stone-500">
+                or drag and drop MP3, WAV, M4A, MP4, MPEG, OGG, FLAC, or WebM (up to 200 MB)
+              </p>
             </>
           ) : (
             <div className="w-full max-w-lg space-y-4">
               <div className="flex items-center justify-between text-xs text-stone-600 font-medium">
                 <span className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-indigo-700" />
-                  Recorded audio
+                  {audioFileName || 'Selected audio'}
                 </span>
-                <span>{formatDuration(recordingDuration)}</span>
+                {recordingDuration > 0 && <span>{formatDuration(recordingDuration)}</span>}
               </div>
               {audioUrl && <audio controls src={audioUrl} className="w-full" />}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={handleTranscribe}
-                  disabled={isTranscribing}
+                  disabled={isTranscribing || isSummarizing}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60"
                 >
                   {isTranscribing ? (
@@ -244,9 +356,18 @@ export function AIStudioPage() {
                 <button
                   type="button"
                   onClick={startRecording}
+                  disabled={isTranscribing || isSummarizing}
                   className="px-4 py-2.5 text-xs font-medium text-stone-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg transition-colors"
                 >
                   Record again
+                </button>
+                <button
+                  type="button"
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={isTranscribing || isSummarizing}
+                  className="px-4 py-2.5 text-xs font-medium text-stone-700 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg transition-colors disabled:opacity-60"
+                >
+                  Choose another file
                 </button>
               </div>
             </div>
@@ -272,6 +393,35 @@ export function AIStudioPage() {
             <div className="p-5 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">
               {transcription}
             </div>
+            <button
+              type="button"
+              onClick={handleSummarize}
+              disabled={isSummarizing || isTranscribing}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60"
+            >
+              {isSummarizing ? (
+                <>
+                  <LoaderCircle className="w-4 h-4 animate-spin" />
+                  Summarizing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Summarize transcript
+                </>
+              )}
+            </button>
+            {summary && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-700" />
+                  Summary
+                </h3>
+                <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">
+                  {summary}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

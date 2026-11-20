@@ -51,6 +51,6 @@ public class TimetableEntry {
     private String roomNumber;
 
     public enum SlotType {
-        LECTURE, LAB, TUTORIAL
+        LECTURE, LAB, TUTORIAL, SEMINAR
     }
 }

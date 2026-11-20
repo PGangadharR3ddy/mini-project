@@ -36,3 +36,82 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a29e;
 }
+
+.app-page-banner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 2px solid #1b1c19 !important;
+  border-radius: 0 !important;
+  background: #f1efe6 !important;
+  padding: 1.25rem;
+  box-shadow: 4px 4px 0 0 #1b1c19 !important;
+}
+
+.app-shell button:not([class*="rounded-full"]),
+.app-shell a:not([class*="rounded-full"]),
+.app-content button:not([class*="rounded-full"]),
+.app-auth button:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+}
+
+.app-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-content select,
+.app-content textarea,
+.app-auth input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-auth select,
+.app-auth textarea {
+  border-radius: 0 !important;
+  border-width: 2px !important;
+  border-color: #a8a29e !important;
+}
+
+.app-content :is(div, section, article, aside)[class~="bg-white"][class*="rounded-2xl"]:not(.app-page-banner),
+.app-auth :is(div, section, article, aside)[class~="bg-white"][class*="rounded-2xl"]:not(.app-page-banner) {
+  border: 2px solid #1b1c19 !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 0 #1b1c19 !important;
+}
+
+.app-shell :is(div, section, article, aside)[class~="bg-white"][class*="rounded-xl"] {
+  border: 2px solid #1b1c19 !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 0 #1b1c19 !important;
+}
+
+.app-shell [class*="bg-indigo-"][class*="text-white"],
+.app-content [class*="bg-indigo-"][class*="text-white"],
+.app-auth [class*="bg-indigo-"][class*="text-white"] {
+  background-color: #065f46 !important;
+  color: #ffffff !important;
+}
+
+.app-content [class*="text-indigo-"],
+.app-auth [class*="text-indigo-"] {
+  color: #065f46 !important;
+}
+
+.app-shell [class*="text-indigo-"] {
+  color: #065f46 !important;
+}
+
+.app-shell [class*="bg-indigo-"],
+.app-content [class*="bg-indigo-"],
+.app-auth [class*="bg-indigo-"] {
+  background-color: #d1fae5 !important;
+}
+
+.app-shell [class*="border-indigo-"],
+.app-content [class*="border-indigo-"],
+.app-auth [class*="border-indigo-"] {
+  border-color: #a7f3d0 !important;
+}
+
+@media (min-width: 640px) {
+  .app-page-banner {
+    flex-direction: row;
+    align-items: center;
+    padding: 1.75rem;
+  }
+}
